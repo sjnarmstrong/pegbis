@@ -55,8 +55,7 @@ torch::Tensor segment_graph(torch::Tensor edge_index, torch::Tensor edge_order, 
   assert(edge_index.size(1) == edge_order.size(0));
   assert(edge_index.size(1) == edge_score.size(0));
 
-  int num_edges = edge_index.size(1);
-  long num_edges_l = edge_index.size(1);
+  long num_edges = edge_index.size(1);
   // populate edges
   long *edge_order_ptr = (long*)edge_order.data_ptr();
   long *edge_ind_ptr = (long*)edge_index.data_ptr();
@@ -70,7 +69,6 @@ torch::Tensor segment_graph(torch::Tensor edge_index, torch::Tensor edge_order, 
   std::fill_n(threshold, num_vertices, c);
 
   // for each edge, in non-decreasing weight order...
-  //  for (int i = 0; i < num_edges; i++) {
   for (long i = 0; i < num_edges; i++)  {
     // components conected by this edge
     long p = edge_order_ptr[i];

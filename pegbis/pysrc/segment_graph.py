@@ -1,11 +1,11 @@
-from pegbis.disjoint_set import *
+from pegbis.pysrc.disjoint_set import *
 import torch
 
 
 # def segment_graph(num_vertices, num_edges, edges, c):
-def segment_graph(edge_index, edge_score, num_vertices, c, min_size=-1):
+def segment_graph(edge_index, edge_order, edge_score, num_vertices, c, min_size=-1):
     # sort edges by weight
-    edge_argsort = torch.argsort(edge_score).tolist()
+    edge_argsort = edge_order.tolist()
     # make a disjoint-set forest
     u = universe(num_vertices)
     # init thresholds
