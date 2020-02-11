@@ -1,4 +1,4 @@
-from disjoint_set import *
+from pegbis.disjoint_set import *
 import math
 import numpy as np
 import random

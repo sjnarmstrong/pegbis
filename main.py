@@ -1,9 +1,9 @@
-from scipy import ndimage
 import matplotlib.pyplot as plt
 from filter import *
 from segment_graph import *
 import time
-
+from PIL import Image
+import numpy as np
 
 # --------------------------------------------------------------------------------
 # Segment an image:
@@ -23,9 +23,12 @@ def segment(in_image, sigma, k, min_size):
     height, width, band = in_image.shape
     print("Height:  " + str(height))
     print("Width:   " + str(width))
-    smooth_red_band = smooth(in_image[:, :, 0], sigma)
-    smooth_green_band = smooth(in_image[:, :, 1], sigma)
-    smooth_blue_band = smooth(in_image[:, :, 2], sigma)
+    # smooth_red_band = smooth(in_image[:, :, 0], sigma)
+    # smooth_green_band = smooth(in_image[:, :, 1], sigma)
+    # smooth_blue_band = smooth(in_image[:, :, 2], sigma)
+    smooth_red_band = in_image[:, :, 0]
+    smooth_green_band = in_image[:, :, 1]
+    smooth_blue_band = in_image[:, :, 2]
 
     # build graph
     edges_size = width * height * 4
@@ -89,7 +92,7 @@ def segment(in_image, sigma, k, min_size):
     plt.imshow(in_image)
     a.set_title('Original Image')
     a = fig.add_subplot(1, 2, 2)
-    plt.imshow(output)
+    plt.imshow(output.astype(np.uint8))
     a.set_title('Segmented Image')
     plt.show()
 
@@ -98,10 +101,11 @@ if __name__ == "__main__":
     sigma = 0.5
     k = 500
     min = 50
-    input_path = "data/paris.jpg"
+    input_path = "data/bridge.jpg"
 
     # Loading the image
-    input_image = ndimage.imread(input_path, flatten=False, mode=None)
+    # input_image = ndimage.imread(input_path, flatten=False, mode=None)
+    input_image = np.array(Image.open(input_path))
     print("Loading is done.")
     print("processing...")
     segment(input_image, sigma, k, min)
