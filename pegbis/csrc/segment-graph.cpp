@@ -38,62 +38,43 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
  * edges: array of edges.
  * c: constant for treshold function.
  */
-torch::Tensor segment_graph(torch::Tensor edge_index, torch::Tensor edge_order, torch::Tensor edge_score, long num_vertices, float c, int min_size) {
-  // check tensors are as expected
-  assert(edge_index.dtype() == torch::kInt64);
-  assert(edge_order.dtype() == torch::kInt32);
-  assert(edge_score.dtype() == torch::kFloat64);
-  assert(edge_order.device().type() == torch::kCPU);
-  assert(edge_index.device().type() == torch::kCPU);
-  assert(edge_score.device().type() == torch::kCPU);
-  assert(edge_index.is_contiguous());
-  assert(edge_order.is_contiguous());
-  assert(edge_score.is_contiguous());
-  assert(edge_order.dim() == 1);
-  assert(edge_index.dim() == 2);
-  assert(edge_score.dim() == 1);
-  assert(edge_index.size(1) == edge_order.size(0));
-  assert(edge_index.size(1) == edge_score.size(0));
-
-  long num_edges = edge_index.size(1);
+torch::Tensor segment_graph(torch::Tensor edge_index, torch::Tensor edge_order, torch::Tensor edge_score, int num_vertices, float c, int min_size) {
+  int num_edges = edge_index.size(1);
   // populate edges
-  long *edge_order_ptr = (long*)edge_order.data_ptr();
-  long *edge_ind_ptr = (long*)edge_index.data_ptr();
-  double *edge_score_ptr = (double*)edge_score.data_ptr();
+  auto edge_order_a = edge_order.accessor<int,1>();
+  auto edge_ind_a = edge_index.accessor<long,2>();
+  auto edge_score_a = edge_score.accessor<float,1>();
 
   // make a disjoint-set forest
   universe u = universe(num_vertices);
 
   // init thresholds
-  float threshold[num_vertices];
+  float* threshold = new float[num_vertices];
   std::fill_n(threshold, num_vertices, c);
 
   // for each edge, in non-decreasing weight order...
-  for (long i = 0; i < num_edges; i++)  {
+  for (int i = 0; i < num_edges; i++)  {
+    int p = edge_order_a[i];
     // components conected by this edge
-    long p = edge_order_ptr[i];
-    long v1 = edge_ind_ptr[p];
-    long v2 = edge_ind_ptr[p+num_edges];
-    float w = edge_score_ptr[p];
-    long a = u.find(v1);
-    long b = u.find(v2);
+    float w = edge_score_a[p];
+    int a = u.find(edge_ind_a[0][p]);
+    int b = u.find(edge_ind_a[1][p]);
     if (a != b) {
       if ((w <= threshold[a]) && (w <= threshold[b])) {
         u.join(a, b);
         a = u.find(a);
+//        printf("(%f, %f, %f, %ld, %ld)", w, threshold[a], threshold[b], a, b);
         threshold[a] = w + THRESHOLD(u.size(a), c);
       }
     }
   }
 
   if (min_size > 0){
-    for (long i = 0; i < num_edges; i++)  {
+      for (int i = 0; i < num_edges; i++)  {
+        int p = edge_order_a[i];
         // components conected by this edge
-        long p = edge_order_ptr[i];
-        long v1 = edge_ind_ptr[p];
-        long v2 = edge_ind_ptr[p+num_edges];
-        long a = u.find(v1);
-        long b = u.find(v2);
+        int a = u.find(edge_ind_a[0][p]);
+        int b = u.find(edge_ind_a[1][p]);
         if ((a != b) and ((u.size(a) < min_size) or (u.size(b) < min_size)) ) { u.join(a, b);}
     }
   }
@@ -103,21 +84,23 @@ torch::Tensor segment_graph(torch::Tensor edge_index, torch::Tensor edge_order, 
     .requires_grad(false);
 
   torch::Tensor res = torch::full({num_vertices}, -1, options);
-  long *res_ptr = (long*)res.data_ptr();
+  auto res_a = res.accessor<long,1>();
 
   long j = 0;
-  for (long i = 0; i < num_vertices; i++) {
-    long a = u.find(i);
-    long clus_id = res_ptr[a];
+  for (int i = 0; i < num_vertices; i++) {
+    int a = u.find(i);
+    long clus_id = res_a[a];
     if (clus_id == -1) {
       clus_id = j++;
-      res_ptr[a] = clus_id;
+//      printf("[%ld:%ld->%ld]", i, a, j);
+      res_a[a] = clus_id;
     }
-    res_ptr[i] = clus_id;
+    res_a[i] = clus_id;
   }
 
 
   // free up
+  delete[] threshold;
   return res;
 }
 

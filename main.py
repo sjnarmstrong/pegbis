@@ -93,9 +93,10 @@ w,h = image.size
 # t0 = time.time()
 # cluster = segment_graph_c(edges, torch.argsort(err), err, w*h, 500, 50)
 # print(f"elapsed time: {time.time()- t0}")
-t0 = time.time()
-cluster = segment_graph(edges, err, w*h, 500, 50)
-print(f"elapsed time2: {time.time()- t0}")
+for i in range(30):
+    t0 = time.time()
+    cluster = segment_graph(edges, err, w*h, 500, 50)
+    print(f"elapsed time2: {time.time()- t0}")
 
 output = np.zeros(shape=(h, w, 3))
 output2 = np.zeros(shape=(h, w, 3))

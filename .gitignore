@@ -90,5 +90,6 @@ modules.xml
 
 __pycache__/
 build/
+*.so
 
 # End of https://www.gitignore.io/api/pycharm+all
